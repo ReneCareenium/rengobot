@@ -16,7 +16,7 @@ def new_game(channel_id):
 
 # Could be an illegal move, or maybe I don't understand the message
 # outputs to <channel_id>.png
-def play_move(channel_id, messagestr, player):
+def play_move(channel_id, messagestr, player, overwrite=False):
 
     thecol= ord(messagestr[0].lower()) - ord('a')
     if thecol>8: thecol-=1 # Go boards don't have an I column!!
@@ -29,6 +29,12 @@ def play_move(channel_id, messagestr, player):
     koban=None
     node= game.get_last_node()
     board, moves= sgf_moves.get_setup_and_moves(game)
+    if overwrite:
+        node2= node.parent
+        node.delete()
+        node= node2
+        moves= moves[:-1]
+
     for (colour, (row, col)) in moves:
         koban=board.play(row,col,colour)
 
@@ -39,18 +45,16 @@ def play_move(channel_id, messagestr, player):
 
     board2= board.copy()
     try:
-        board2.play(therow, thecol, colour)
+        koban2=board2.play(therow, thecol, colour)
     except ValueError as e:
         raise ValueError("Illegal move1!")
 
-    if ascii_boards.render_board(board)== ascii_boards.render_board(board2):
+    if board2.get(therow,thecol) == None:
         raise ValueError("Illegal move2!")
-
-    #print(moves)
 
     node2= node.new_child()
     node2.set(("B" if colour =='b' else "W"), (therow,thecol))
-    if koban is not None: node2.set("SQ", [koban])
+    if koban2 is not None: node2.set("SQ", [koban2])
     node2.set("CR", [(therow, thecol)])
     node2.set("C", player) # I think this would be fun for the review
     if node.has_property("CR"): node.unset("CR")
