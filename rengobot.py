@@ -14,7 +14,7 @@ from discord.ext import commands
 
 bot = commands.Bot(command_prefix='$', help_command=None)
 
-min_time_player= timedelta(seconds=1) # in random/queue games, cooldown time between plays
+min_time_player= timedelta(seconds=1) # in random games, cooldown time between plays
 time_to_skip= timedelta(days=1) # in queue games, how much time to wait for the next move
 min_players = 2
 
@@ -35,13 +35,12 @@ format="%Y_%m_%d_%H_%M_%S_%f"
 
 @bot.command()
 async def help(ctx):
-    print(ctx.message.content)
     await ctx.send(
             '$help : shows this help\n\n'+
 
             '$join : join the game in this channel\n'+
             '$leave: leave the game in this channel\n'+
-            '$play <move>: play a move. For example, `$play Q16`\n'+
+            '$play <move>: play a move. For example, `$play Q16`. Passing is not implemented!\n'+
             '$edit <move>: if you make a mistake in your move, you have 5 minutes to correct it with this command\n\n'+
 
             '$sgf: get the sgf file of the game\n'+
@@ -49,7 +48,7 @@ async def help(ctx):
             '$queue: get the queue of players\n\n'+
 
             '$newgame <queue/random>: starts a game in this channel (admin only!)\n'+
-            '$resign <B/W>: resigns the game in this channel (admin only!)'
+            '$resign <B/W>: resigns the game in this channel, and returns its sgf file (admin only!)'
             )
     # ctx has guild, message, author, send, and channel (?)
 
