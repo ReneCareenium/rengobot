@@ -11,11 +11,11 @@ from discord.ext import commands
 
 # We don't use fancy slash commands here. It seems there is this library for python but it looks a bit more involved.
 # https://pypi.org/project/discord-py-slash-command/
+
 bot = commands.Bot(command_prefix='$', help_command=None)
 
-format="%Y_%m_%d_%H_%M_%S_%f"
-min_time_player= timedelta(minutes=1)
-time_to_skip= timedelta(seconds=30) # in queue games, how much time to wait for the next move
+min_time_player= timedelta(seconds=1) # in random/queue games, cooldown time between plays
+time_to_skip= timedelta(days=1) # in queue games, how much time to wait for the next move
 min_players = 2
 
 # People who can start and resign games :O
@@ -29,8 +29,9 @@ admins=[ 756220448118669463, # Young Sun
 with open("token.txt") as f:
     token = f.readlines()[0] # Get your own token and put it in token.txt
 
-# The state is a list of tuples (channel_id, "queue"/"random", last_players, last_times, [player_id])
+format="%Y_%m_%d_%H_%M_%S_%f"
 
+# The state is a list of tuples (channel_id, "queue"/"random", last_players, last_times, [player_id])
 
 @bot.command()
 async def help(ctx):
@@ -83,7 +84,7 @@ async def play(ctx, arg):
         assert( len(state[i][2]) == len(state[i][3]))
 
         if len(state[i][2])>0 and state[i][2][-1] == user.id:
-            await ctx.send("No two consecutive moves per player!")
+            await ctx.send("No two consecutive moves by the same player!")
             return
 
         for j in range(len(state[i][2])):
@@ -243,11 +244,11 @@ async def queue(ctx):
         return
 
     output= "Player list:\n"
-    for i, player_id in enumerate(state[i][4]):
+    for j, player_id in enumerate(state[i][4]):
         player_name=(await bot.fetch_user(player_id)).name
-        output+=str(i+1)+". "+ player_name+"\n"
+        output+=str(j+1)+". "+ player_name+"\n"
 
-    if not state[i][4]:
+    if state[i][4]==[]:
         output+="Nobody yet! Join us with `$join`"
 
     await ctx.send(output)
@@ -365,9 +366,9 @@ async def background_task():
 
                 last_time= datetime.strptime(state[i][3][-1],format)
                 time_left= last_time + time_to_skip-datetime.now()
-                if time_left < time_to_skip * 2/3: # Probably remove? Depends on how passive aggressive it is
+                if time_left < time_to_skip * 2/3 and time_left > time_to_skip*2/3-timedelta(seconds=10): # Probably remove? Depends on how passive aggressive it is
                     next_user = await bot.fetch_user(state[i][4][0])
-                    await channel.send("{}'s turn!".format(next_user.mention))#, time_left.total_seconds()/3600) )
+                    await channel.send("{}'s turn! Time is running up!".format(next_user.mention))#, time_left.total_seconds()/3600) )
                 if time_left < timedelta():
                     state[i][3][-1]= datetime.strftime(datetime.now(),format)
                     state[i][2][-1]= None
