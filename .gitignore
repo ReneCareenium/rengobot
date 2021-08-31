@@ -2,3 +2,5 @@ state.txt
 token.txt
 *.sgf
 *.png
+__pycache__
+poetry.lock
