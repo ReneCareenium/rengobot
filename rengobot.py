@@ -19,12 +19,7 @@ time_to_skip= timedelta(days=1) # in queue games, how much time to wait for the 
 min_players = 2
 
 # People who can start and resign games :O
-# Later we might replace this with checking for a role.
-admins=[ 756220448118669463, # Young Sun
-         732403731810877450, # Yeonwoo
-         145294584077877249, # Mrchance
-         477895596141707264  # René
-        ]
+admin_role = 'RCON' # Change this to the name of the role for your admins
 
 with open("token.txt") as f:
     token = f.readlines()[0] # Get your own token and put it in token.txt
@@ -290,8 +285,9 @@ async def leave(ctx):
 async def newgame(ctx, arg):
     channel_id= ctx.channel.id
     user = ctx.author
+    roles = map(lambda x : x.name, user.roles)
 
-    if user.id not in admins:
+    if admin_role not in roles:
         await ctx.send("You don't have permissions for this!")
         return
 
@@ -321,8 +317,9 @@ async def newgame(ctx, arg):
 async def resign(ctx, arg):
     channel_id= ctx.channel.id
     user = ctx.author
+    roles = map(lambda x : x.name, user.roles)
 
-    if user.id not in admins:
+    if admin_role not in roles:
         await ctx.send("You don't have permissions for this!")
         return
 
