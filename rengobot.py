@@ -17,7 +17,7 @@ bot = commands.Bot(command_prefix='$', help_command=None)
 
 min_time_player= timedelta(seconds=1) # in random games, min time between same player plays (default days=1)
 time_to_skip= timedelta(days=1) # in queue games, how much time to wait for the next move
-min_players = 4
+min_players = 3
 
 # People who can start and resign games :O
 # Later we might replace this with checking for a role.
