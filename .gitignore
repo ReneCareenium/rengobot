@@ -1,4 +1,6 @@
-state.txt
-token.txt
+*.txt
 *.sgf
 *.png
+*.out
+__pycache__/
+rengobot_venv/

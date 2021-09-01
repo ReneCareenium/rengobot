@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta
 import asyncio
 
+#395277704007778325
 import sgfengine
 
 import discord
@@ -14,9 +15,9 @@ from discord.ext import commands
 
 bot = commands.Bot(command_prefix='$', help_command=None)
 
-min_time_player= timedelta(seconds=1) # in random games, cooldown time between plays
+min_time_player= timedelta(seconds=1) # in random games, min time between same player plays (default days=1)
 time_to_skip= timedelta(days=1) # in queue games, how much time to wait for the next move
-min_players = 2
+min_players = 4
 
 # People who can start and resign games :O
 # Later we might replace this with checking for a role.
@@ -48,7 +49,7 @@ async def help(ctx):
             '$queue: get the queue of players\n\n'+
 
             '$newgame <queue/random>: starts a game in this channel (admin only!)\n'+
-            '$resign <B/W>: resigns the game in this channel, and returns its sgf file (admin only!)'
+            '$resign <B/W>: <B/W> resigns the game in this channel. It returns its sgf file (admin only!)'
             )
     # ctx has guild, message, author, send, and channel (?)
 
@@ -215,7 +216,7 @@ async def join(ctx):
         return
 
     if state[i][1] != "queue":
-        await ctx.send("This game has no queue! Play whenever you want :P")
+        await ctx.send("This game has no queue! No need to join, just `$play` whenever you want :P")
         return
 
     state[i][4].append(user.id)
@@ -239,7 +240,7 @@ async def queue(ctx):
     i= filter_state[0]
 
     if state[i][1] != "queue":
-        await ctx.send("This game has no queue! Play whenever you want :P")
+        await ctx.send("This game has no queue! No need to join, just `$play` whenever you want :P")
         return
 
     output= "Player list:\n"
@@ -280,7 +281,7 @@ async def leave(ctx):
         await ctx.send("This game has no queue! No need to leave!")
         return
 
-    state[i][4].remove(user.id)
+    state[i][4].remove(user.id) #TODO What happens with this and the skipping?
 
     await ctx.send("User left :(")
 
@@ -349,6 +350,8 @@ async def background_task():
     print("bot ready!")
 
     guild=discord.utils.get(bot.guilds, name="Awesome Baduk")
+    game=discord.Game("multiplayer Baduk! Everyone can $play <move>! $help for command list")
+    await bot.change_presence(status=discord.Status.online, activity=game)
 
     while not bot.is_closed():
         try:
