@@ -2,5 +2,6 @@
 *.sgf
 *.png
 *.out
+*.sh
 __pycache__/
 rengobot_venv/
