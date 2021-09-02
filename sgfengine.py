@@ -14,6 +14,15 @@ def new_game(channel_id):
 
     os.system("sgf-render --style fancy -o "+channel_id+".png -n last "+channel_id+".sgf")
 
+#0 if black to play, 1 if white to play
+def next_colour(channel_id):
+    with open(channel_id+".sgf","rb") as f:
+        game = sgf.Sgf_game.from_bytes(f.read())
+    f.close()
+
+    node= game.get_last_node()
+    return 1 if ("B" in node.properties()) else 0
+
 # Could be an illegal move, or maybe I don't understand the message
 # outputs to <channel_id>.png
 def play_move(channel_id, messagestr, player, overwrite=False):
@@ -47,10 +56,10 @@ def play_move(channel_id, messagestr, player, overwrite=False):
     try:
         koban2=board2.play(therow, thecol, colour)
     except ValueError as e:
-        raise ValueError("Illegal move1!")
+        raise ValueError("Illegal move! There is a stone there.")
 
     if board2.get(therow,thecol) == None:
-        raise ValueError("Illegal move2!")
+        raise ValueError("Illegal move! No self-captures allowed.")
 
     node2= node.new_child()
     node2.set(("B" if colour =='b' else "W"), (therow,thecol))
