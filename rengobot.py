@@ -431,7 +431,7 @@ async def background_task():
                 last_time= datetime.strptime(state[i][3][-1],format)
                 time_left= last_time + time_to_skip-datetime.now()
 
-                if time_left < time_to_skip * 2/3 and time_left > time_to_skip*2/3-timedelta(seconds=10): # Probably remove? Depends on how passive aggressive it is
+                if time_left < time_to_skip/3.0 and time_left > time_to_skip/3.0-timedelta(seconds=10): # Probably remove? Depends on how passive aggressive it is
                     next_user = await guild.fetch_member(state[i][4][colour][0])
                     await channel.send("{}'s turn! Time is running up!".format(next_user.mention))#, time_left.total_seconds()/3600) )
                 if time_left < timedelta():
