@@ -26,8 +26,12 @@ admins=[ 756220448118669463, # Young Sun
          477895596141707264  # René
         ]
 
+teachers=[ 756220448118669463, # Young Sun
+           145294584077877249, # Mrchance
+           732403731810877450] # Yeonwoo
+
 awesome_server_id= 767835617002258443
-permitted_channel_ids= [ 875353143867752489, 885498819385634816, 878649716269785150, 881984021192671242, 892435998070431755, 892436145651216444]
+permitted_channel_ids= [ 875353143867752489, 885498819385634816, 878649716269785150, 881984021192671242, 892435998070431755, 892436145651216444,870604751354613770]
 
 white_stone= "<:white_stone:882731089548939314>"
 black_stone= "<:black_stone:882730888453046342>"
@@ -54,7 +58,7 @@ async def help(ctx):
             '$board: shows the current board\n'+
             '$queue: get the queue of players\n\n'+
 
-            '$newgame <queue/random>: starts a game in this channel (admin only!)\n'+
+            '$newgame <queue/random/teachers> <handicap> <komi>: starts a game in this channel (admin only!)\n'+
             '$resign <B/W>: <B/W> resigns the game in this channel. It returns its sgf file (admin only!)'
             )
     # ctx has guild, message, author, send, and channel (?)
@@ -69,34 +73,33 @@ async def play(ctx, arg):
     # lowest effort serialization
     with open("state.txt") as f: state = ast.literal_eval(f.read())
 
-    filter_state= [i for i in range(len(state))  if state[i][0] == channel_id]
+    filter_state= [i for i in range(len(state))  if state[i][0] == channel_id] # This is where I should use a fancy next()
     if not filter_state:
         await ctx.send("No active game in this channel!")
         return
 
     i= filter_state[0]
 
-    if state[i][1] == "queue" and user.id not in state[i][4][0]+state[i][4][1]:
+    if state[i][1] in ["queue", "teachers"] and user.id not in state[i][4][0]+state[i][4][1]:
         await ctx.send("Player hasn't joined yet! Join us with `$join`")
         return
 
     if state[i][1] == "queue" and (len(state[i][4][0])<min_players or len(state[i][4][1]) <min_players):
-
         await ctx.send("Waiting for more players to join! Minimum {} per team".format(min_players))
         return
 
     colour= sgfengine.next_colour(str(channel_id))
 
-    if state[i][1] == "queue" and user.id!= state[i][4][colour][0]:
+    if (state[i][1] == "queue" and user.id!= state[i][4][colour][0]) or (state[i][1]=="teachers" and ((colour==0 and user.id!=state[i][4][0][0]) or (colour==1 and user.id not in state[i][4][1]))):
         await ctx.send("It is not your turn yet!")
         return
 
     if state[i][1] == "random":
         assert( len(state[i][2]) == len(state[i][3]))
 
-        if len(state[i][2])>0 and state[i][2][-1] == user.id:
+        if len(state[i][2])>0 and state[i][2][-1] == user.id and (state[i][1]!="teachers" or colour=="0"):
             await ctx.send("No two consecutive moves by the same player!")
-            return
+            # return
 
         for j in range(len(state[i][2])):
             if (state[i][2][j] == user.id and
@@ -128,10 +131,19 @@ async def play(ctx, arg):
         state[i][4][colour].pop(0)
         state[i][4][colour].append(user.id)
 
+    if state[i][1] == "teachers" and colour==0:
+        state[i][4][0].pop(0)
+        state[i][4][0].append(user.id)
+
     file = discord.File(str(ctx.channel.id)+".png")
     if state[i][1]=="queue":
         next_player=(await guild.fetch_member(state[i][4][1-colour][0]))
         await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.mention))
+    elif state[i][1]=="teachers" and colour==1:
+        next_player=(await guild.fetch_member(state[i][4][1-colour][0]))
+        await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.mention))
+    elif state[i][1]=="teachers" and colour==0:
+        await ctx.send(file=file, content="Teachers' turn! ⭐")
     else:
         await ctx.send(file=file)
 
@@ -154,11 +166,6 @@ async def edit(ctx, arg): #literally play but with less things
         return
 
     i= filter_state[0]
-
-    if state[i][1] == "queue" and user.id not in (state[i][4][0]+ state[i][4][1]):
-        await ctx.send("Player hasn't joined yet! Join us with `$join`")
-        return
-
     colour= sgfengine.next_colour(str(channel_id))
 
     if len(state[i][2])==0 or state[i][2][-1] != user.id or datetime.now()-datetime.strptime(state[i][3][-1],format) > timedelta(minutes=5):
@@ -181,6 +188,11 @@ async def edit(ctx, arg): #literally play but with less things
     if state[i][1]=="queue":
         next_player=(await guild.fetch_member(state[i][4][colour][0]))
         await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.display_name))
+    elif state[i][1]=="teachers" and colour==1:
+        next_player=(await guild.fetch_member(state[i][4][1-colour][0]))
+        await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.mention))
+    elif state[i][1]=="teachers" and colour==0:
+        await ctx.send(file=file, content="Teachers' turn! ⭐")
     else:
         await ctx.send(file=file)
 
@@ -203,7 +215,7 @@ async def board(ctx):
     i= filter_state[0]
     colour= sgfengine.next_colour(str(channel_id))
 
-    os.system("sgf-render --style fancy -o "+str(channel_id)+".png -n last "+str(channel_id)+".sgf")
+    os.system("sgf-render --style fancy --label-sides nesw -o "+str(channel_id)+".png -n last "+str(channel_id)+".sgf")
 
     file = discord.File(str(ctx.channel.id)+".png")
     if state[i][1]=="queue":
@@ -212,6 +224,12 @@ async def board(ctx):
             await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.display_name))
         else:
             await ctx.send(file=file, content="Waiting for players to join!")
+    if state[i][1]=="teachers":
+        if colour==0:
+            next_player=(await guild.fetch_member(state[i][4][colour][0]))
+            await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.display_name))
+        else:
+            await ctx.send(file=file, content="Teachers' turn! ⭐")
     else:
         await ctx.send(file=file)
 
@@ -235,11 +253,13 @@ async def join(ctx):
         await ctx.send("Player already in this game!")
         return
 
-    if state[i][1] != "queue":
+    if state[i][1] == "random":
         await ctx.send("This game has no queue! No need to join, just `$play` whenever you want :P")
         return
 
     colour = 0 if len(state[i][4][0])<=len(state[i][4][1]) else 1
+    if state[i][1]=="teachers": colour= 0
+
     state[i][4][colour].append(user.id)
 
     await ctx.send("User {} joined Team {}!".format(user.display_name, ("Black" if colour==0 else "White")))
@@ -266,7 +286,7 @@ async def leave(ctx):
         await ctx.send("Player not in this game!")
         return
 
-    if state[i][1] != "queue":
+    if state[i][1] == "random":
         await ctx.send("This game has no queue! No need to leave!")
         return
 
@@ -295,8 +315,16 @@ async def queue(ctx):
     i= filter_state[0]
     colour= sgfengine.next_colour(str(channel_id))
 
-    if state[i][1] != "queue":
+    if state[i][1] == "random":
         await ctx.send("This game has no queue! No need to join, just `$play` whenever you want :P")
+        return
+
+    if state[i][1] =="teachers":
+        output="Player list for Team Black: "+black_stone+"\n"
+        for j, player_id in enumerate(state[i][4][0]):
+            player_name=(await guild.fetch_member(player_id)).display_name
+            output+=str(j+1).rjust(3)+". "+ player_name+"\n"
+        await ctx.send(output)
         return
 
     output= "Player list:\n"
@@ -358,7 +386,7 @@ async def sgf(ctx):
     await ctx.send(file=file)
 
 @bot.command()
-async def newgame(ctx, arg):
+async def newgame(ctx, gametype, handicap=0, komi=6.5):
     if ctx.guild.id == awesome_server_id and ctx.channel.id not in permitted_channel_ids: return
     channel_id= ctx.channel.id
     user = ctx.author
@@ -367,8 +395,8 @@ async def newgame(ctx, arg):
         await ctx.send("You don't have permissions for this!")
         return
 
-    if arg not in ["queue", "random"]:
-        await ctx.send("Unrecognized game type! Please try `$newgame <queue/random>")
+    if gametype not in ["queue", "random", "teachers"]:
+        await ctx.send("Unrecognized game type! Please try `$newgame <queue/random/teachers>")
         return
 
     # lowest effort serialization
@@ -378,11 +406,14 @@ async def newgame(ctx, arg):
         await ctx.send("A game is already active in this channel!")
         return
 
-    sgfengine.new_game(str(ctx.channel.id))
-    state.append((ctx.channel.id, arg, [], [], [[],[]]))
+    sgfengine.new_game(str(ctx.channel.id), handicap, komi)
+    if gametype== "teachers":
+        state.append((ctx.channel.id, gametype, [], [], [[],teachers]))
+    else:
+        state.append((ctx.channel.id, gametype, [], [], [[],[]]))
 
     file = discord.File(str(ctx.channel.id)+".png")
-    if arg=="queue":
+    if gametype in ["queue", "teachers"]:
         await ctx.send(file=file, content="A new game has started! Join with `$join`")
     else:
         await ctx.send(file=file, content="A new game has started! Play with `$play <move>`")
@@ -433,12 +464,13 @@ async def background_task():
 
             #TODO find who has to move, skip players accordingly, notify if any has to move
             for i in range(len(state)):
-                if state[i][3] == [] or state[i][1]!="queue": continue
+                if state[i][3] == [] or state[i][1]=="random": continue
 
                 channel_id= state[i][0]
                 channel= bot.get_channel(channel_id)
 
                 colour = sgfengine.next_colour(str(channel_id))
+                if state[i][1]=="teachers" and colour=="1": continue #Ask the teachers if they want a ping
 
                 last_time= datetime.strptime(state[i][3][-1],format)
                 time_left= last_time + time_to_skip-datetime.now()

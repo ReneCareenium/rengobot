@@ -5,8 +5,22 @@ from sgfmill import sgf, boards, sgf_moves, ascii_boards
 
 # This file only deals with the png and sgf side of things. To manage users etc go to the main file.
 
-def new_game(channel_id):
+def new_game(channel_id, handicap=0, komi=6.5):
     game= sgf.Sgf_game(19)
+    game.root.set("KM", komi)
+    if handicap>=2:
+        game.root.set("HA", handicap)
+
+        handicap_dict={
+                2: [(3,3), (15,15)],
+                3: [(3,3), (15,15), (15,3)],
+                4: [(3,3), (15,15), (15,3), (3,15)],
+                5: [(3,3), (15,15), (15,3), (3,15), (9,9)],
+                6: [(3,3), (15,15), (15,3), (3,15), (9,3), (9,15)],
+                7: [(3,3), (15,15), (15,3), (3,15), (9,3), (9,15), (9,9)],
+                8: [(3,3), (15,15), (15,3), (3,15), (9,3), (9,15), (3,9), (15,9)],
+                9: [(3,3), (15,15), (15,3), (3,15), (9,3), (9,15), (3,9), (15,9), (9,9)]}
+        game.root.set("AB",handicap_dict[handicap])
 
     with open (channel_id+".sgf", "wb") as f:
         f.write(game.serialise())
@@ -21,7 +35,7 @@ def next_colour(channel_id):
     f.close()
 
     node= game.get_last_node()
-    return 1 if ("B" in node.properties()) else 0
+    return 1 if ("B" in node.properties() or "AB" in node.properties()) else 0
 
 # Could be an illegal move, or maybe I don't understand the message
 # outputs to <channel_id>.png
@@ -50,7 +64,7 @@ def play_move(channel_id, messagestr, player, overwrite=False):
     if (therow, thecol)==koban:
         raise ValueError("Ko banned move!")
 
-    colour = "w" if ("B" in node.properties()) else "b"
+    colour = "w" if ("B" in node.properties() or "AB" in node.properties()) else "b"
 
     board2= board.copy()
     try:
