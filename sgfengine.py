@@ -87,7 +87,7 @@ def play_move(channel_id, messagestr, player, overwrite=False):
         f.write(game.serialise())
     f.close()
 
-    os.system("sgf-render --style fancy -o "+channel_id+".png -n last "+channel_id+".sgf")
+    os.system("sgf-render --style fancy --label-sides nesw -o "+channel_id+".png -n last "+channel_id+".sgf")
 
 # colour is "B" if black resigns, "W" if white resigns
 def resign(channel_id, colour, file_name):
