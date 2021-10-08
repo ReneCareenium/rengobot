@@ -26,7 +26,7 @@ def new_game(channel_id, handicap=0, komi=6.5):
         f.write(game.serialise())
     f.close()
 
-    os.system("sgf-render --style fancy -o "+channel_id+".png -n last "+channel_id+".sgf")
+    os.system("sgf-render --style fancy --label-sides nesw -o "+channel_id+".png -n last "+channel_id+".sgf")
 
 #0 if black to play, 1 if white to play
 def next_colour(channel_id):
