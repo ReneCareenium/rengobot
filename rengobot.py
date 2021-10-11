@@ -262,7 +262,7 @@ async def join(ctx):
 
     state[i][4][colour].append(user.id)
 
-    await ctx.send("User {} joined Team {}!".format(user.display_name, ("Black" if colour==0 else "White")))
+    await ctx.send("{} joined Team {}!".format(user.display_name, ("Black" if colour==0 else "White")))
 
     with open("state.txt", "w") as f: f.write(repr(state))
 
@@ -293,7 +293,7 @@ async def leave(ctx):
     colour = 0 if (user.id in state[i][4][0]) else 1
     state[i][4][colour].remove(user.id)
 
-    await ctx.send("User {} left :(".format(user.display_name))
+    await ctx.send("{} left :(".format(user.display_name))
 
     with open("state.txt", "w") as f: f.write(repr(state))
 
