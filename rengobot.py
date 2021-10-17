@@ -139,10 +139,10 @@ async def play(ctx, arg):
     if state[i][1]=="queue":
         next_player=(await guild.fetch_member(state[i][4][1-colour][0]))
         await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.mention))
-    elif state[i][1]=="teachers" and colour==0:
+    elif state[i][1]=="teachers" and colour==1:
         next_player=(await guild.fetch_member(state[i][4][1-colour][0]))
         await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.mention))
-    elif state[i][1]=="teachers" and colour==1:
+    elif state[i][1]=="teachers" and colour==0:
         await ctx.send(file=file, content="Teachers' turn! ⭐")
     else:
         await ctx.send(file=file)
@@ -188,10 +188,10 @@ async def edit(ctx, arg): #literally play but with less things
     if state[i][1]=="queue":
         next_player=(await guild.fetch_member(state[i][4][colour][0]))
         await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.display_name))
-    elif state[i][1]=="teachers" and colour==1:
-        next_player=(await guild.fetch_member(state[i][4][1-colour][0]))
-        await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.mention))
     elif state[i][1]=="teachers" and colour==0:
+        next_player=(await guild.fetch_member(state[i][4][colour][0]))
+        await ctx.send(file=file, content="{}'s turn! ⭐".format(next_player.mention))
+    elif state[i][1]=="teachers" and colour==1:
         await ctx.send(file=file, content="Teachers' turn! ⭐")
     else:
         await ctx.send(file=file)
